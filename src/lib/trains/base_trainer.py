@@ -42,7 +42,7 @@ class BaseTrainer(object):
         if isinstance(v, torch.Tensor):
           state[k] = v.to(device=device, non_blocking=True)
 
-  def run_epoch(self, phase, epoch, data_loader):
+  def run_epoch(self, phase, epoch, data_loader, experiment):
     model_with_loss = self.model_with_loss
     if phase == 'train':
       model_with_loss.train()
@@ -95,6 +95,9 @@ class BaseTrainer(object):
       
       if opt.test:
         self.save_result(output, batch, results)
+      if experiment is not None:
+        for k,v in avg_loss_stats.items():
+          experiment.log_metric(k, v.avg, step=epoch*(iter_id+1), epoch=epoch)
       del output, loss, loss_stats, batch
     
     bar.finish()
@@ -115,5 +118,5 @@ class BaseTrainer(object):
   def val(self, epoch, data_loader):
     return self.run_epoch('val', epoch, data_loader)
 
-  def train(self, epoch, data_loader):
-    return self.run_epoch('train', epoch, data_loader)
+  def train(self, epoch, data_loader, experiment=None):
+    return self.run_epoch('train', epoch, data_loader, experiment)
