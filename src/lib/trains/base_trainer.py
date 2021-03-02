@@ -7,7 +7,7 @@ import torch
 from progress.bar import Bar
 from models.data_parallel import DataParallel
 from utils.utils import AverageMeter
-
+import numpy as np
 
 class ModleWithLoss(torch.nn.Module):
   def __init__(self, model, loss):
@@ -42,7 +42,7 @@ class BaseTrainer(object):
         if isinstance(v, torch.Tensor):
           state[k] = v.to(device=device, non_blocking=True)
 
-  def run_epoch(self, phase, epoch, data_loader, experiment):
+  def run_epoch(self, phase, epoch, data_loader, experiment, mean, std):
     model_with_loss = self.model_with_loss
     if phase == 'train':
       model_with_loss.train()
@@ -74,6 +74,11 @@ class BaseTrainer(object):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        if iter_id % 200 == 0:
+          image = batch['input'][0, ...].permute(1, 2, 0).to('cpu').numpy()
+          experiment.log_image(image, name=phase,
+                              image_channels="last", step=iter_id)   
+
       batch_time.update(time.time() - end)
       end = time.time()
 
@@ -95,7 +100,7 @@ class BaseTrainer(object):
       
       if opt.test:
         self.save_result(output, batch, results)
-      if experiment is not None:
+      if phase == "train":
         for k,v in avg_loss_stats.items():
           experiment.log_metric(k, v.avg, step=epoch*(iter_id+1), epoch=epoch)
       del output, loss, loss_stats, batch
@@ -116,7 +121,7 @@ class BaseTrainer(object):
     raise NotImplementedError
   
   def val(self, epoch, data_loader):
-    return self.run_epoch('val', epoch, data_loader, None)
+    return self.run_epoch('val', epoch, data_loader, None, 0, 0)
 
-  def train(self, epoch, data_loader, experiment=None):
-    return self.run_epoch('train', epoch, data_loader, experiment)
+  def train(self, epoch, data_loader, experiment, mean, std):
+    return self.run_epoch('train', epoch, data_loader, experiment, mean, std)

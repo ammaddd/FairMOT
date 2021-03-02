@@ -70,7 +70,8 @@ def main(opt):
 
     for epoch in range(start_epoch + 1, opt.num_epochs + 1):
         mark = epoch if opt.save_all else 'last'
-        log_dict_train, _ = trainer.train(epoch, train_loader, experiment)
+        log_dict_train, _ = trainer.train(epoch, train_loader, experiment,
+                                         opt.mean, opt.std)
         logger.write('epoch: {} |'.format(epoch))
         for k, v in log_dict_train.items():
             logger.scalar_summary('train_{}'.format(k), v, epoch)
@@ -79,16 +80,19 @@ def main(opt):
         if opt.val_intervals > 0 and epoch % opt.val_intervals == 0:
             save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(mark)),
                        epoch, model, optimizer)
-            experiment.log_model("FairMOT", os.path.join(opt.save_dir, 'model_{}.pth'.format(mark)))
+            experiment.log_model("FairMOT", os.path.join(opt.save_dir,
+                                'model_{}.pth'.format(mark)))
         else:
             save_model(os.path.join(opt.save_dir, 'model_last.pth'),
                        epoch, model, optimizer)
-            experiment.log_model("FairMOT", os.path.join(opt.save_dir, 'model_last.pth'))
+            experiment.log_model("FairMOT", os.path.join(opt.save_dir,
+                                'model_last.pth'))
         logger.write('\n')
         if epoch in opt.lr_step:
             save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)),
                        epoch, model, optimizer)
-            experiment.log_model("FairMOT", os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)))
+            experiment.log_model("FairMOT", os.path.join(opt.save_dir,
+                                'model_{}.pth'.format(epoch)))
             lr = opt.lr * (0.1 ** (opt.lr_step.index(epoch) + 1))
             experiment.log_parameter("learning_rate", lr, epoch=epoch)
 
@@ -99,7 +103,8 @@ def main(opt):
             print("Saving weights")
             save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)),
                        epoch, model, optimizer)
-            experiment.log_model("FairMOT", os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)))
+            experiment.log_model("FairMOT", os.path.join(opt.save_dir,
+                                'model_{}.pth'.format(epoch)))
             
             
     logger.close()
