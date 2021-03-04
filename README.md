@@ -129,7 +129,15 @@ ${FAIRMOT_ROOT}
 * Download the training data
 * Change the dataset root directory 'root' in src/lib/cfg/data.json and 'data_dir' in src/lib/opts.py
 * Pretrain on CrowdHuman and train on MIX:
+
+To log the training, create a <a href="https://www.comet.ml/">Comet API key</a>, and run the following before training model:
 ```
+export COMET_API_KEY=YOUR-API-KEY 
+```
+Demo Project: https://www.comet.ml/comet-papers/fairmot <br /><br />
+<p align="center"><img src="" height="400px" /><br />
+Example of training images logged in comet.</p>
+
 sh experiments/crowdhuman_dla34.sh
 sh experiments/mix_ft_ch_dla34.sh
 ```
