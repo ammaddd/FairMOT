@@ -135,8 +135,7 @@ To log the training, create a <a href="https://www.comet.ml/">Comet API key</a>,
 export COMET_API_KEY=YOUR-API-KEY 
 ```
 Demo Project: https://www.comet.ml/comet-papers/fairmot <br /><br />
-<p align="center"><img src="![image](https://user-images.githubusercontent.com/49341767/109954410-2095e380-7d03-11eb-87fa-690f27ae24c4.png)
-" height="400px" /><br />
+<p align="center"><img src="https://user-images.githubusercontent.com/49341767/109954410-2095e380-7d03-11eb-87fa-690f27ae24c4.png" height="400px" /><br />
 Example of training images logged in comet.</p>
 
 sh experiments/crowdhuman_dla34.sh
