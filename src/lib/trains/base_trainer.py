@@ -42,7 +42,7 @@ class BaseTrainer(object):
         if isinstance(v, torch.Tensor):
           state[k] = v.to(device=device, non_blocking=True)
 
-  def run_epoch(self, phase, epoch, data_loader, experiment):
+  def run_epoch(self, phase, epoch, data_loader, comet_logger):
     model_with_loss = self.model_with_loss
     if phase == 'train':
       model_with_loss.train()
@@ -77,8 +77,8 @@ class BaseTrainer(object):
         self.optimizer.step()
         if iter_id % 200 == 0:
           image = batch['input'][0, ...].permute(1, 2, 0).to('cpu').numpy()
-          experiment.log_image(image, name=phase,
-                               image_channels="last", step=global_step)   
+          comet_logger.log_image(image, name=phase,
+                                 image_channels="last", step=global_step)   
 
       batch_time.update(time.time() - end)
       end = time.time()
@@ -103,7 +103,7 @@ class BaseTrainer(object):
         self.save_result(output, batch, results)
       if phase == "train":
         for k,v in avg_loss_stats.items():
-          experiment.log_metric(k, v.avg, step=global_step, epoch=epoch)
+          comet_logger.log_metric(k, v.avg, step=global_step, epoch=epoch)
       del output, loss, loss_stats, batch
     
     bar.finish()
@@ -124,5 +124,5 @@ class BaseTrainer(object):
   def val(self, epoch, data_loader):
     return self.run_epoch('val', epoch, data_loader, None)
 
-  def train(self, epoch, data_loader, experiment):
-    return self.run_epoch('train', epoch, data_loader, experiment)
+  def train(self, epoch, data_loader, comet_logger):
+    return self.run_epoch('train', epoch, data_loader, comet_logger)
