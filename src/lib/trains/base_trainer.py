@@ -7,7 +7,7 @@ import torch
 from progress.bar import Bar
 from models.data_parallel import DataParallel
 from utils.utils import AverageMeter
-
+import numpy as np
 
 class ModleWithLoss(torch.nn.Module):
   def __init__(self, model, loss):
@@ -42,7 +42,7 @@ class BaseTrainer(object):
         if isinstance(v, torch.Tensor):
           state[k] = v.to(device=device, non_blocking=True)
 
-  def run_epoch(self, phase, epoch, data_loader):
+  def run_epoch(self, phase, epoch, data_loader, experiment):
     model_with_loss = self.model_with_loss
     if phase == 'train':
       model_with_loss.train()
@@ -62,6 +62,7 @@ class BaseTrainer(object):
     for iter_id, batch in enumerate(data_loader):
       if iter_id >= num_iters:
         break
+      global_step = (epoch-1)*len(data_loader)+iter_id
       data_time.update(time.time() - end)
 
       for k in batch:
@@ -74,6 +75,11 @@ class BaseTrainer(object):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        if iter_id % 200 == 0:
+          image = batch['input'][0, ...].permute(1, 2, 0).to('cpu').numpy()
+          experiment.log_image(image, name=phase,
+                               image_channels="last", step=global_step)   
+
       batch_time.update(time.time() - end)
       end = time.time()
 
@@ -95,6 +101,9 @@ class BaseTrainer(object):
       
       if opt.test:
         self.save_result(output, batch, results)
+      if phase == "train":
+        for k,v in avg_loss_stats.items():
+          experiment.log_metric(k, v.avg, step=global_step, epoch=epoch)
       del output, loss, loss_stats, batch
     
     bar.finish()
@@ -113,7 +122,7 @@ class BaseTrainer(object):
     raise NotImplementedError
   
   def val(self, epoch, data_loader):
-    return self.run_epoch('val', epoch, data_loader)
+    return self.run_epoch('val', epoch, data_loader, None)
 
-  def train(self, epoch, data_loader):
-    return self.run_epoch('train', epoch, data_loader)
+  def train(self, epoch, data_loader, experiment):
+    return self.run_epoch('train', epoch, data_loader, experiment)
